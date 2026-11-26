@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -59,6 +60,7 @@ public class InstallerWindow : Window
     readonly TextBox path = new(){IsReadOnly=true,Padding=new Thickness(8)};
     readonly TextBlock label = new(), status = new(){TextWrapping=TextWrapping.Wrap};
     readonly Button browse = new(), install = new(), uninstall = new();
+    bool applying;
     string[] words = global::Language.Read(AppContext.BaseDirectory);
     public InstallerWindow()
     {
@@ -85,19 +87,35 @@ public class InstallerWindow : Window
             if(folder.ShowDialog(this)!=true) return;
             path.Text=folder.FolderName; status.Text=""; words=global::Language.Read(path.Text); Update();
         });
-        install.Click+=(_,_)=>Run(()=>{
-            var manifest = Path.Combine(AppContext.BaseDirectory, "payload", "plugin.json");
-            Package.Install(path.Text, manifest); status.Text=words[4];
-        });
-        uninstall.Click+=(_,_)=>Run(()=>{Package.Uninstall(path.Text); status.Text=words[4];});
+        install.Click+=async (_,_)=>await Apply(true);
+        uninstall.Click+=async (_,_)=>await Apply(false);
+        Closing+=(_,e)=>{ if (applying) e.Cancel=true; };
+    }
+    async Task Apply(bool installing)
+    {
+        if (applying) return;
+        var game = path.Text;
+        var manifest = Path.Combine(AppContext.BaseDirectory, "payload", "plugin.json");
+        applying=true;
+        status.Text=words[installing ? 2 : 3]+"…";
+        Update();
+        try {
+            await Task.Run(()=>{
+                if (installing) Package.Install(game,manifest);
+                else Package.Uninstall(game);
+            });
+            status.Text=words[4];
+        } catch(Exception e){status.Text=e.Message;}
+        finally { applying=false; Update(); }
     }
     void Update()
     {
         label.Text=words[0]; browse.Content=words[1]; install.Content=words[2]; uninstall.Content=words[3];
         var validGame = path.Text.Length > 0 && File.Exists(Path.Combine(path.Text, "sinking_star.exe"));
         var installed = validGame && Package.HasReceipt(path.Text);
-        install.IsEnabled = validGame;
-        uninstall.IsEnabled = installed;
+        browse.IsEnabled = !applying;
+        install.IsEnabled = validGame && !applying;
+        uninstall.IsEnabled = installed && !applying;
     }
     void Run(Action action)
     {
