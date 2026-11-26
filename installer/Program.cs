@@ -55,29 +55,14 @@ public static class Language
     }
 }
 
-public class InstallerWindow : Window
+public partial class InstallerWindow : Window
 {
-    readonly TextBox path = new(){IsReadOnly=true,Padding=new Thickness(8)};
-    readonly TextBlock label = new(), status = new(){TextWrapping=TextWrapping.Wrap};
-    readonly Button browse = new(), install = new(), uninstall = new();
+    void CloseWindow(object sender, RoutedEventArgs e) => Close();
     bool applying;
     string[] words = global::Language.Read(AppContext.BaseDirectory);
     public InstallerWindow()
     {
-        Title="Sinking Star · Red Panda"; Width=530; Height=350; MinWidth=460; MinHeight=320;
-        Background=new SolidColorBrush(Color.FromRgb(42,39,39)); Foreground=Brushes.White;
-        WindowStartupLocation=WindowStartupLocation.CenterScreen;
-        var panel=new StackPanel{Margin=new Thickness(26)};
-        Content=panel;
-        panel.Children.Add(new TextBlock{Text=Title,FontSize=25,Margin=new Thickness(0,0,0,20)});
-        panel.Children.Add(label);
-        var row=new DockPanel{Margin=new Thickness(0,6,0,15)};
-        panel.Children.Add(row); DockPanel.SetDock(browse,Dock.Right); row.Children.Add(browse); row.Children.Add(path);
-        var actions=new StackPanel{Orientation=Orientation.Horizontal};
-        panel.Children.Add(actions); actions.Children.Add(install); actions.Children.Add(uninstall);
-        foreach(var b in new[]{browse,install,uninstall}) b.Padding=new Thickness(12,6,12,6);
-        install.Margin=new Thickness(0,0,8,0);
-        status.Margin=new Thickness(0,12,0,0); panel.Children.Add(status);
+        InitializeComponent();
         Run(()=>{
             path.Text=SteamGame.Find();
             if(path.Text.Length>0) words=global::Language.Read(path.Text);
