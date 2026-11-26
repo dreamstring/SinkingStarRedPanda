@@ -27,11 +27,12 @@ static_assert(offsetof(GraphicsMenuRow, flags) == 32);
 
 constexpr int character_style_id = 6;
 
-constexpr int next_graphics_row(int current, int direction, std::uint32_t enabled)
+constexpr int next_graphics_row(int current, int direction, std::uint32_t native_enabled)
 {
     constexpr int count = character_style_id + 1;
     if (current < 0 || current >= count || (direction != 1 && direction != -1))
         return current;
+    const auto enabled = native_enabled | (1u << character_style_id);
     auto candidate = current;
     for (int step = 0; step < count; ++step) {
         candidate = (candidate + direction + count) % count;
@@ -39,6 +40,10 @@ constexpr int next_graphics_row(int current, int direction, std::uint32_t enable
     }
     return current;
 }
+
+static_assert(next_graphics_row(0, -1, 0x3f) == character_style_id);
+static_assert(next_graphics_row(character_style_id, 1, 0x3e) == 1);
+static_assert(next_graphics_row(5, 1, 0) == character_style_id);
 
 constexpr GraphicsMenuRow character_style_row(bool panda)
 {
