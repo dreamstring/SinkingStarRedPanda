@@ -1,6 +1,8 @@
 #pragma once
 
 #include <cstddef>
+#include <algorithm>
+#include <array>
 #include <cstdint>
 #include <string_view>
 #include <type_traits>
@@ -42,5 +44,23 @@ constexpr GraphicsMenuRow character_style_row(bool panda)
     const std::string_view key = panda ? "red_panda_character_style_panda"
                                        : "red_panda_character_style_original";
     return {static_cast<std::int64_t>(key.size()), key.data(), character_style_id, 0, -1.0, 1, {}};
+}
+
+using DrawMenuRows = void (*)(void*, std::int64_t, const GraphicsMenuRow*,
+                              int, int, const void*);
+
+inline void draw_character_graphics_menu(DrawMenuRows draw, void* context,
+                                         std::int64_t count, const GraphicsMenuRow* rows,
+                                         int layout, int selected, const void* color,
+                                         bool panda)
+{
+    if (count < 0 || count > character_style_id || (count && !rows)) {
+        draw(context, count, rows, layout, selected, color);
+        return;
+    }
+    std::array<GraphicsMenuRow, character_style_id + 1> visible;
+    if (count) std::copy_n(rows, count, visible.begin());
+    visible[count] = character_style_row(panda);
+    draw(context, count + 1, visible.data(), layout, selected, color);
 }
 }
