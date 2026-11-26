@@ -86,3 +86,11 @@ extern "C" __declspec(dllexport) void RedPandaUpdateInstalledScene(
     RedPandaApplyScene(context, world, reinterpret_cast<const void*>(base + 0x6a8bf0),
                        reinterpret_cast<SelectMesh>(base + 0x199ac0), RedPandaSelectedStyle());
 }
+
+extern "C" __declspec(dllexport) void RedPandaClassifyInstalledProfession(
+    const Name* mesh, unsigned char* profession) noexcept
+{
+    using Classify = void(*)(const Name*, unsigned char*);
+    const auto base = reinterpret_cast<std::uintptr_t>(GetModuleHandleW(nullptr));
+    reinterpret_cast<Classify>(base + 0x219a20)(RedPandaProfessionName(mesh), profession);
+}

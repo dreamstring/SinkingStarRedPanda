@@ -15,7 +15,7 @@ def build(stock, output):
         raise ValueError("Expected the supported stock executable and a new output file")
     binary = lief.PE.parse(str(stock))
     plugin = binary.add_import(PLUGIN)
-    for export in ("RedPandaDrawInstalledPage", "RedPandaConfirmMenuRow", "RedPandaUpdateInstalledScene"):
+    for export in ("RedPandaDrawInstalledPage", "RedPandaConfirmMenuRow", "RedPandaUpdateInstalledScene", "RedPandaClassifyInstalledProfession"):
         plugin.add_entry(export)
     config = lief.PE.Builder.config_t()
     config.imports = True
@@ -47,6 +47,13 @@ def build(stock, output):
         relative(b"\xff\x25", imports["RedPandaUpdateInstalledScene"])
         replace(0x40992d, b"\xe8" + struct.pack("<i", 0x285d70 - 0x409932),
                 b"\xe8" + struct.pack("<i", scene - 0x409932))
+
+        classify = start + len(code)
+        relative(b"\xff\x25", imports["RedPandaClassifyInstalledProfession"])
+        for caller in (0x8a56d, 0x2861cb, 0x2acfbf, 0x2e10b2, 0x323333, 0x32364f,
+                       0x3bcffa, 0x3e25fc, 0x3e2c49, 0x41b12e, 0x428ae8):
+            replace(caller, b"\xe8" + struct.pack("<i", 0x219a20 - caller - 5),
+                    b"\xe8" + struct.pack("<i", classify - caller - 5))
 
         confirm = start + len(code)
         # Fullscreen keeps its existing path. Row one was handled earlier.
