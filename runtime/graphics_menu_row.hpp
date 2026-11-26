@@ -15,7 +15,8 @@ struct GraphicsMenuRow {
     std::uint32_t reserved;
     double value;
     std::uint8_t flags;
-    std::uint8_t padding[7];
+    std::uint8_t draw_flag_33;  // Passed separately by the native row renderer.
+    std::uint8_t padding[6];
 };
 
 static_assert(std::is_trivially_copyable_v<GraphicsMenuRow>);
@@ -43,7 +44,7 @@ constexpr GraphicsMenuRow character_style_row(bool panda)
 {
     const std::string_view key = panda ? "red_panda_character_style_panda"
                                        : "red_panda_character_style_original";
-    return {static_cast<std::int64_t>(key.size()), key.data(), character_style_id, 0, -1.0, 1, {}};
+    return {static_cast<std::int64_t>(key.size()), key.data(), character_style_id, 0, -1.0, 1, 0, {}};
 }
 
 using DrawMenuRows = void (*)(void*, std::int64_t, const GraphicsMenuRow*,
