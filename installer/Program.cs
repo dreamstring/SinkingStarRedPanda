@@ -76,7 +76,10 @@ public class InstallerWindow : Window
         foreach(var b in new[]{browse,install,uninstall}) b.Padding=new Thickness(12,6,12,6);
         install.Margin=new Thickness(0,0,8,0);
         status.Margin=new Thickness(0,12,0,0); panel.Children.Add(status);
-        Update();
+        Run(()=>{
+            path.Text=SteamGame.Find();
+            if(path.Text.Length>0) words=global::Language.Read(path.Text);
+        });
         browse.Click+=(_,_)=>Run(()=>{
             var folder=new OpenFolderDialog();
             if(folder.ShowDialog(this)!=true) return;
@@ -93,7 +96,7 @@ public class InstallerWindow : Window
         label.Text=words[0]; browse.Content=words[1]; install.Content=words[2]; uninstall.Content=words[3];
         var validGame = path.Text.Length > 0 && File.Exists(Path.Combine(path.Text, "sinking_star.exe"));
         var installed = validGame && Package.HasReceipt(path.Text);
-        install.IsEnabled = validGame && !installed;
+        install.IsEnabled = validGame;
         uninstall.IsEnabled = installed;
     }
     void Run(Action action)

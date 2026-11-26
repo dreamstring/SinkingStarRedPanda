@@ -55,8 +55,42 @@ public static class Package
     public static void Install(string game, string manifest)
     {
         using var guard = Lock(game);
+        if (!HasReceipt(game)) { InstallFresh(game,manifest); return; }
+        var state = Resolve(game,State);
+        var entries = JsonSerializer.Deserialize<Entry[]>(File.ReadAllText(Resolve(state,"receipt.json")))
+            ?? throw new InvalidDataException(state);
+        var rollback = Directory.CreateTempSubdirectory("panda-upgrade-").FullName;
+        bool retainRollback = false;
+        try {
+            var previous = new List<PluginFile>();
+            foreach (var entry in entries) {
+                var source = previous.Count+".previous";
+                var copy = Path.Combine(rollback,source);
+                File.Copy(Target(game,entry.target),copy);
+                if (Hash(copy) != entry.installed) throw new IOException(entry.target);
+                previous.Add(new(source,entry.target,entry.installed));
+            }
+            var previousManifest = Path.Combine(rollback,"plugin.json");
+            File.WriteAllText(previousManifest,JsonSerializer.Serialize(previous));
+            Restore(game);
+            try { InstallFresh(game,manifest); }
+            catch {
+                try { InstallFresh(game,previousManifest,allowEmptyReceipt:true); }
+                catch (Exception recovery) {
+                    retainRollback = true;
+                    throw new IOException($"Recovery files: {rollback}",recovery);
+                }
+                throw;
+            }
+        } finally {
+            if (!retainRollback) Directory.Delete(rollback,true);
+        }
+    }
+
+    static void InstallFresh(string game, string manifest, bool allowEmptyReceipt = false)
+    {
         var files = JsonSerializer.Deserialize<PluginFile[]>(File.ReadAllText(manifest));
-        if (files == null || files.Length == 0) throw new InvalidDataException(manifest);
+        if (files == null || (files.Length == 0 && !allowEmptyReceipt)) throw new InvalidDataException(manifest);
         var state = Resolve(game,State);
         if (Directory.Exists(state)) throw new IOException(state);
         var entries = new List<Entry>();

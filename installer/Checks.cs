@@ -24,6 +24,16 @@ public static class Checks
             void Plan(string second)=>File.WriteAllText(manifest,JsonSerializer.Serialize(new[]{new PluginFile("payload","old",digest),new PluginFile("payload",second,digest)}));
             Plan("added"); Package.Install(game,manifest);
             Check(File.ReadAllText(old)=="plugin" && File.ReadAllText(added)=="plugin");
+            Package.Install(game,manifest);
+            File.WriteAllText(Path.Combine(root,"v2"),"updated");
+            File.WriteAllText(manifest,JsonSerializer.Serialize(new[]{new PluginFile("v2","old",digest)}));
+            try {Package.Install(game,manifest); throw new Exception("Expected invalid upgrade");}
+            catch(InvalidDataException){}
+            Check(File.ReadAllText(old)=="plugin" && File.ReadAllText(added)=="plugin");
+            var updatedDigest=Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(Path.Combine(root,"v2"))));
+            File.WriteAllText(manifest,JsonSerializer.Serialize(new[]{new PluginFile("v2","old",updatedDigest)}));
+            Package.Install(game,manifest);
+            Check(File.ReadAllText(old)=="updated" && !File.Exists(added));
             Package.Uninstall(game); Check(File.ReadAllText(old)=="original" && !File.Exists(added));
             Plan("old/child");
             try {Package.Install(game,manifest); throw new Exception("Expected failure");} catch(IOException){}
@@ -33,6 +43,14 @@ public static class Checks
             try {Package.Install(game,manifest); throw new Exception("Expected checksum failure");}
             catch(InvalidDataException){}
             Check(File.ReadAllText(old)=="original" && !File.Exists(added) && !Directory.Exists(Path.Combine(game,".panda-install")));
+            var stockDigest=Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(old)));
+            File.WriteAllText(manifest,JsonSerializer.Serialize(new[]{new PluginFile("unused","old",stockDigest,digest)}));
+            Package.Install(game,manifest);
+            Plan("added");
+            try {Package.Install(game,manifest); throw new Exception("Expected invalid upgrade of migration-only installation");}
+            catch(InvalidDataException){}
+            Check(Package.HasReceipt(game) && File.ReadAllText(old)=="original" && !File.Exists(added));
+            Package.Uninstall(game);
             return 0;
         } catch(Exception e){File.WriteAllText(Path.Combine(root,"failure.txt"),e.ToString());return 1;}
         finally {if(!File.Exists(Path.Combine(root,"failure.txt"))) Directory.Delete(root,true);}
