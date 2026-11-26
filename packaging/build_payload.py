@@ -9,6 +9,7 @@ from pathlib import Path
 from build_menu_strings import build as build_strings
 from build_mesh_aliases import build as build_aliases
 from build_catalogs import build as build_catalogs
+from build_game_menu import build as build_game_menu, STOCK
 
 
 def verify_runtime(path):
@@ -27,7 +28,8 @@ def verify_runtime(path):
         raise ctypes.WinError(ctypes.get_last_error())
     try:
         for name in ("RedPandaMenuRow", "RedPandaConfirmMenuRow", "RedPandaSelectedStyle",
-                     "RedPandaProfessionName", "RedPandaApplyScene"):
+                     "RedPandaProfessionName", "RedPandaApplyScene", "RedPandaDrawInstalledPage",
+                     "RedPandaUpdateInstalledScene", "RedPandaClassifyInstalledProfession"):
             if not kernel.GetProcAddress(handle, name.encode("ascii")):
                 raise ValueError(f"{path} lacks required runtime export {name}")
     finally:
@@ -65,12 +67,15 @@ def build(assets, strings, loader, runtime, output, stock=None, rules=None):
         build_catalogs(strings.parent, stage)
         shutil.copyfile(loader, stage / "winmm.dll")
         shutil.copyfile(runtime, stage / "ssmods" / "RedPanda" / "RedPanda.dll")
+        build_game_menu(strings.parent.parent / "sinking_star.exe", stage / "sinking_star.exe")
         entries = []
         for path in sorted(stage.rglob("*")):
             if path.is_file():
                 target = path.relative_to(stage).as_posix()
                 entries.append(dict(source=target, target=target,
                                     sha256=hashlib.sha256(path.read_bytes()).hexdigest()))
+        executable = next(entry for entry in entries if entry["target"] == "sinking_star.exe")
+        executable["migrateFrom"] = STOCK
         if (stock is None) != (rules is None):
             raise ValueError("Supply both stock and rules for direct-install migration")
         if stock is not None:
