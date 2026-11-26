@@ -29,6 +29,32 @@ def correct_druid_antlers(raw):
     return bytes(data)
 
 
+def correct_trader_panniers(raw):
+    """Restore front and reverse winding for the two verified merchant meshes."""
+    data = bytearray(raw)
+    vertices, = struct.unpack_from("<I", data, 4)
+    slots, = struct.unpack_from("<I", data, 52)
+    offset = 56 + 44 * vertices
+    for _ in range(3):
+        header = offset + 12 * slots
+        count, size = struct.unpack_from("<II", data, header)
+        start = header + 10
+        front_count = count // 6
+        # Faces relative to the end of the front copy: bases, curved lid, two caps.
+        for relative, length in ((-2548, 64), (-2484, 72), (-2401, 11), (-1618, 11)):
+            for index in range(front_count + relative, front_count + relative + length):
+                front = start + index * 6
+                back = front + front_count * 6
+                a, b, c = struct.unpack_from("<3H", data, front)
+                if struct.unpack_from("<3H", data, back) != (c, b, a):
+                    raise ValueError("Unexpected merchant reverse-face layout")
+                face = (c, b, a) if relative == -2548 else (a, c, b)
+                struct.pack_into("<3H", data, front, *face)
+                struct.pack_into("<3H", data, back, *reversed(face))
+        offset = start + size
+    return bytes(data)
+
+
 def build_mesh_outlines(source, stage):
     data = source.read_bytes()
     native = dict(row.split() for row in data.splitlines() if row.strip())
@@ -95,6 +121,11 @@ def build(assets, original_materials, stage):
             "1ed9499bf0fa4cefc1ef3d80a51d36a232f9bab61a96498a429e2653f8beda9c"
         ):
             raw = correct_druid_antlers(raw)
+        if (mesh.stem, hashlib.sha256(blob).hexdigest()) in {
+            ("trader", "6e3661b56b9953883f0fa3ee1d652cf39605015a3510137fcac2b437e4a74a57"),
+            ("trader_alt", "38dd09b5289927792e994db148e1ccba7f4f406144db6ba55e21048df81bd062"),
+        }:
+            raw = correct_trader_panniers(raw)
         # Mesh material names are ASCII strings preceded by their uint16 byte count.
         def mesh_ref(match):
             name = match[2]
