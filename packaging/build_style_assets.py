@@ -36,6 +36,15 @@ def read(stream, entry):
     return blob
 
 
+def animation_slots(blob):
+    slots = []
+    for line in blob.decode('utf-8-sig').splitlines():
+        fields = line.partition('#')[0].split()
+        if len(fields) >= 2:
+            slots.append(fields[0])
+    return slots
+
+
 def build(stock, panda, rules, output):
     output.mkdir(parents=True, exist_ok=False)
     records = []
@@ -62,7 +71,11 @@ def build(stock, panda, rules, output):
                     raise ValueError('Removed asset keys')
                 for key, entry in right.items():
                     blob = read(b, entry)
-                    if key not in left or read(a, left[key]) != blob:
+                    original_blob = read(a, left[key]) if key in left else None
+                    if original_blob != blob:
+                        if original_blob is not None and key.endswith('.animation_names'):
+                            if animation_slots(original_blob) != animation_slots(blob):
+                                raise ValueError(f'Animation slot order mismatch: {key}')
                         store(key, blob)
     (output / 'assets.json').write_text(json.dumps(records, indent=2), encoding='utf-8')
     return len(records)
