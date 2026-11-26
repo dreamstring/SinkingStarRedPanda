@@ -1,3 +1,4 @@
+#include <windows.h>
 #include <cstdint>
 #include <cstring>
 #include <string_view>
@@ -72,4 +73,16 @@ extern "C" __declspec(dllexport) int RedPandaApplyScene(
         }
     }
     return changed;
+}
+
+extern "C" bool RedPandaSelectedStyle() noexcept;
+
+extern "C" __declspec(dllexport) void RedPandaUpdateInstalledScene(
+    void* context, void* world, unsigned char mode, std::uintptr_t flags, void* result) noexcept
+{
+    const auto base = reinterpret_cast<std::uintptr_t>(GetModuleHandleW(nullptr));
+    using Update = void(*)(void*, void*, unsigned char, std::uintptr_t, void*);
+    reinterpret_cast<Update>(base + 0x285d70)(context, world, mode, flags, result);
+    RedPandaApplyScene(context, world, reinterpret_cast<const void*>(base + 0x6a8bf0),
+                       reinterpret_cast<SelectMesh>(base + 0x199ac0), RedPandaSelectedStyle());
 }
