@@ -61,11 +61,15 @@ public static class Package
         if (Directory.Exists(state)) throw new IOException(state);
         var entries = new List<Entry>();
         var targets = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var newDirectories = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         Directory.CreateDirectory(state);
         try {
             foreach (var file in files) {
                 var target = Target(game,file.target);
                 if (!targets.Add(target) || Directory.Exists(target)) throw new InvalidDataException(target);
+                for (var dir = Path.GetDirectoryName(target); dir != null && !Directory.Exists(dir);
+                     dir = Path.GetDirectoryName(dir))
+                    newDirectories.Add(Path.GetRelativePath(game, dir));
                 var stage = Path.Combine(state,entries.Count+".new");
                 File.Copy(Resolve(Path.GetDirectoryName(Path.GetFullPath(manifest))!,file.source),stage);
                 var installed = Hash(stage);
@@ -79,6 +83,7 @@ public static class Package
                 }
                 entries.Add(new(file.target,installed,original));
             }
+            File.WriteAllText(Path.Combine(state,"directories.json"), JsonSerializer.Serialize(newDirectories));
             File.WriteAllText(Path.Combine(state,"pending"),JsonSerializer.Serialize(entries));
             File.Move(Path.Combine(state,"pending"),Path.Combine(state,"receipt.json"));
             for (int i=0;i<entries.Count;i++) {
@@ -120,6 +125,16 @@ public static class Package
                 var temp = Resolve(state,i+".restore");
                 File.Copy(Resolve(state,i+".bak"),temp,true);
                 File.Move(temp,target,true);
+            }
+        }
+        var directoryReceipt = Resolve(state,"directories.json");
+        if (File.Exists(directoryReceipt)) {
+            var directories = JsonSerializer.Deserialize<string[]>(File.ReadAllText(directoryReceipt))
+                ?? throw new InvalidDataException(directoryReceipt);
+            foreach (var relative in directories.OrderByDescending(name => name.Length)) {
+                var dir = Target(game, relative);
+                if (Directory.Exists(dir) && !Directory.EnumerateFileSystemEntries(dir).Any())
+                    Directory.Delete(dir);
             }
         }
         Directory.Delete(state,true);
