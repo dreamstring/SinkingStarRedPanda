@@ -6,7 +6,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Security.Cryptography;
 
-public record PluginFile(string source, string target);
+public record PluginFile(string source, string target, string sha256);
 public record Entry(string target, string installed, string? original);
 
 public static class Package
@@ -66,13 +66,16 @@ public static class Package
                 if (!targets.Add(target) || Directory.Exists(target)) throw new InvalidDataException(target);
                 var stage = Path.Combine(state,entries.Count+".new");
                 File.Copy(Resolve(Path.GetDirectoryName(Path.GetFullPath(manifest))!,file.source),stage);
+                var installed = Hash(stage);
+                if (!string.Equals(installed, file.sha256, StringComparison.OrdinalIgnoreCase))
+                    throw new InvalidDataException($"SHA-256 mismatch: {file.source}");
                 string? original = null;
                 if (File.Exists(target)) {
                     var backup = Path.Combine(state,entries.Count+".bak");
                     File.Copy(target,backup);
                     original = Hash(backup);
                 }
-                entries.Add(new(file.target,Hash(stage),original));
+                entries.Add(new(file.target,installed,original));
             }
             File.WriteAllText(Path.Combine(state,"pending"),JsonSerializer.Serialize(entries));
             File.Move(Path.Combine(state,"pending"),Path.Combine(state,"receipt.json"));

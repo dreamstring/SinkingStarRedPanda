@@ -20,13 +20,19 @@ public static class Checks
             var old=Path.Combine(game,"old"); var added=Path.Combine(game,"added");
             File.WriteAllText(old,"original"); File.WriteAllText(Path.Combine(root,"payload"),"plugin");
             var manifest=Path.Combine(root,"plugin.json");
-            void Plan(string second)=>File.WriteAllText(manifest,JsonSerializer.Serialize(new[]{new PluginFile("payload","old"),new PluginFile("payload",second)}));
+            var digest = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(Path.Combine(root,"payload"))));
+            void Plan(string second)=>File.WriteAllText(manifest,JsonSerializer.Serialize(new[]{new PluginFile("payload","old",digest),new PluginFile("payload",second,digest)}));
             Plan("added"); Package.Install(game,manifest);
             Check(File.ReadAllText(old)=="plugin" && File.ReadAllText(added)=="plugin");
             Package.Uninstall(game); Check(File.ReadAllText(old)=="original" && !File.Exists(added));
             Plan("old/child");
             try {Package.Install(game,manifest); throw new Exception("Expected failure");} catch(IOException){}
             Check(File.ReadAllText(old)=="original" && !Directory.Exists(Path.Combine(game,".panda-install")));
+            Plan("added");
+            File.WriteAllText(Path.Combine(root,"payload"),"damaged");
+            try {Package.Install(game,manifest); throw new Exception("Expected checksum failure");}
+            catch(InvalidDataException){}
+            Check(File.ReadAllText(old)=="original" && !File.Exists(added) && !Directory.Exists(Path.Combine(game,".panda-install")));
             return 0;
         } catch(Exception e){File.WriteAllText(Path.Combine(root,"failure.txt"),e.ToString());return 1;}
         finally {if(!File.Exists(Path.Combine(root,"failure.txt"))) Directory.Delete(root,true);}
