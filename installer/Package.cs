@@ -12,6 +12,8 @@ public record Entry(string target, string installed, string? original);
 public static class Package
 {
     const string State = ".panda-install";
+    public static bool HasReceipt(string game) =>
+        File.Exists(Path.Combine(game, State, "receipt.json"));
     static string Hash(string file)
     {
         using var stream = File.OpenRead(file);

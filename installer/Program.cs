@@ -91,11 +91,15 @@ public class InstallerWindow : Window
     void Update()
     {
         label.Text=words[0]; browse.Content=words[1]; install.Content=words[2]; uninstall.Content=words[3];
-        install.IsEnabled=uninstall.IsEnabled=File.Exists(Path.Combine(path.Text,"sinking_star.exe")) && path.Text.Length>0;
+        var validGame = path.Text.Length > 0 && File.Exists(Path.Combine(path.Text, "sinking_star.exe"));
+        var installed = validGame && Package.HasReceipt(path.Text);
+        install.IsEnabled = validGame && !installed;
+        uninstall.IsEnabled = installed;
     }
     void Run(Action action)
     {
-        try {action();} catch(Exception e){status.Text=e.Message; Update();}
+        try {action();} catch(Exception e){status.Text=e.Message;}
+        finally { Update(); }
     }
     [STAThread] public static int Main(string[] args)
     {
