@@ -29,6 +29,22 @@ def correct_druid_antlers(raw):
     return bytes(data)
 
 
+def build_mesh_outlines(source, stage):
+    data = source.read_bytes()
+    native = dict(row.split() for row in data.splitlines() if row.strip())
+    additions = []
+    for mesh in sorted((stage / "data-pc").glob("red_panda_*.compressed_mesh")):
+        alias = mesh.stem.encode()
+        role = alias[len(b"red_panda_"):]
+        material = native.get(role) or native.get(role.removesuffix(b"_alt"))
+        if not material:
+            raise ValueError(f"Missing native mesh outline for {mesh.stem}")
+        additions.append(alias + b" " + material)
+    newline = b"\r\n" if b"\r\n" in data else b"\n"
+    (stage / "data" / source.name).write_bytes(data.rstrip(b"\r\n") + newline +
+                                             newline.join(additions) + newline)
+
+
 def build(assets, original_materials, stage):
     pc = stage / "data-pc"
     pc.mkdir(exist_ok=True)
@@ -94,3 +110,5 @@ def build(assets, original_materials, stage):
         adapted = re.sub(pattern, mesh_ref, raw, flags=re.I | re.S)
         result = blob[:8] + struct.pack("<I", len(adapted) + 12) + lz4.block.compress(adapted, store_size=False)
         (pc / ("red_panda_" + mesh.name)).write_bytes(result)
+
+    build_mesh_outlines(original_materials.with_name("mesh_outlines.mesh_outlines"), stage)

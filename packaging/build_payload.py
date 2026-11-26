@@ -76,6 +76,8 @@ def build(assets, strings, loader, runtime, output, stock=None, rules=None):
                                     sha256=hashlib.sha256(path.read_bytes()).hexdigest()))
         executable = next(entry for entry in entries if entry["target"] == "sinking_star.exe")
         executable["migrateFrom"] = STOCK
+        outlines = next(entry for entry in entries if entry["target"] == "data/mesh_outlines.mesh_outlines")
+        outlines["migrateFrom"] = hashlib.sha256((strings.parent / "mesh_outlines.mesh_outlines").read_bytes()).hexdigest()
         if (stock is None) != (rules is None):
             raise ValueError("Supply both stock and rules for direct-install migration")
         if stock is not None:
