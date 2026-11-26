@@ -1,6 +1,8 @@
 """Register alternate appearance resources alongside the game's original catalog entries."""
 import shutil
 import struct
+import re
+from pathlib import Path
 
 from build_style_assets import directory, read
 
@@ -61,10 +63,40 @@ def extend_manifest(stock, pc):
     return stock[:mesh_start]+tables[0]+tables[1]+names+struct.pack("<6Q",counts[0],mesh_start,counts[1],textures_at,len(names),names_at)
 
 
+def animation_aliases(package, assets):
+    additions = {}
+    clips = {}
+    for clip in (assets / "data-common").glob("*.anim"):
+        alias = "red_panda_" + clip.stem
+        clips[clip.stem.lower().encode()] = alias.encode()
+        additions["data-common/" + alias + ".anim"] = clip.read_bytes()
+    with package.open("rb") as stream:
+        table = directory(stream)
+        for key in table.keys() | {p.relative_to(assets).as_posix() for p in assets.rglob("*.sound_events")}:
+            path = Path(key)
+            if path.suffix == ".sound_events" and path.stem.lower().encode() in clips:
+                override = assets / path
+                sound = override.read_bytes() if override.exists() else read(stream, table[key])
+                additions[path.with_name("red_panda_" + path.name).as_posix()] = sound
+        for names in (assets / "data/animations").glob("*.animation_names"):
+            key = names.relative_to(assets)
+            graph = key.with_suffix(".animation_graph")
+            additions[graph.with_name("red_panda_" + graph.name).as_posix()] = read(stream, table[graph.as_posix()])
+            def resolve(match):
+                name = match[2]
+                return match[1] + clips.get(name.lower(), name)
+            additions[key.with_name("red_panda_" + key.name).as_posix()] = re.sub(
+                rb"(?m)^([ \t]*[^#\s]+[ \t]+)([^#\s]+)", resolve, names.read_bytes())
+    return additions
+
+
 def build(source, stage):
     key = "data-pc/all.asset_manifest"
     with (source / "levels.package").open("rb") as stream:
         stock = read(stream, directory(stream)[key])
     materials = {p.relative_to(stage).as_posix(): p.read_bytes() for p in (stage/"data/materials").rglob("*.material")}
-    for name, additions in [("materials.package", materials), ("levels.package", {key: extend_manifest(stock, stage/"data-pc")})]:
+    assets = stage / "ssmods/RedPanda/assets"
+    animations = animation_aliases(source / "animation.package", assets)
+    for name, additions in [("materials.package", materials), ("animation.package", animations),
+                            ("levels.package", {key: extend_manifest(stock, stage/"data-pc")})]:
         extend_package(source/name, stage/"data"/name, additions)

@@ -52,7 +52,7 @@ def build(assets, strings, loader, runtime, output, stock=None, rules=None):
         if stock is not None:
             for rule in json.loads(rules.read_bytes()):
                 target = rule["file"]
-                if target in {"data/materials.package", "data/levels.package"}:
+                if target in {"data/materials.package", "data/animation.package", "data/levels.package"}:
                     with (strings.parent / Path(target).name).open("rb") as stream:
                         if hashlib.file_digest(stream, "sha256").hexdigest() != rule["original"]:
                             raise ValueError(f"Original catalog mismatch: {target}")
