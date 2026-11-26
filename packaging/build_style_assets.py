@@ -55,7 +55,7 @@ def build(stock, panda, rules, output):
             records.append(dict(source=path, key=key, sha256=hashlib.sha256(blob).hexdigest()))
         if not path.endswith('.package'):
             store(path, replacement.read_bytes())
-        elif path in ('data/animation.package', 'data/materials.package'):
+        else:
             with original.open('rb') as a, replacement.open('rb') as b:
                 left, right = directory(a), directory(b)
                 if left.keys() - right.keys():
