@@ -1,0 +1,54 @@
+"""Assemble the private installer payload from verified assets and built binaries."""
+import argparse
+import hashlib
+import json
+import shutil
+import tempfile
+from pathlib import Path
+
+from build_menu_strings import build as build_strings
+
+
+def stage_resources(assets, strings, stage):
+    root = stage / "ssmods" / "RedPanda" / "assets"
+    root.mkdir(parents=True)
+    index = assets / "assets.json"
+    for record in json.loads(index.read_bytes()):
+        key = record["key"]
+        source = (assets / key).resolve()
+        source.relative_to(assets.resolve())
+        dest = (root / key).resolve()
+        dest.relative_to(root.resolve())
+        data = source.read_bytes()
+        if hashlib.sha256(data).hexdigest() != record["sha256"] or dest.exists():
+            raise ValueError(f"Invalid or duplicate asset: {key}")
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_bytes(data)
+    shutil.copyfile(index, root / "assets.json")
+    build_strings(strings, stage / "data" / "strings")
+
+
+def build(assets, strings, loader, runtime, output):
+    if output.exists():
+        raise FileExistsError(output)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(dir=output.parent) as tmp:
+        stage = Path(tmp) / "payload"
+        stage_resources(assets, strings, stage)
+        shutil.copyfile(loader, stage / "winmm.dll")
+        shutil.copyfile(runtime, stage / "ssmods" / "RedPanda" / "RedPanda.dll")
+        entries = []
+        for path in sorted(stage.rglob("*")):
+            if path.is_file():
+                target = path.relative_to(stage).as_posix()
+                entries.append(dict(source=target, target=target,
+                                    sha256=hashlib.sha256(path.read_bytes()).hexdigest()))
+        (stage / "plugin.json").write_text(json.dumps(entries, indent=2), encoding="utf-8")
+        stage.rename(output)
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description=__doc__)
+    for name in ("assets", "strings", "loader", "runtime", "output"):
+        parser.add_argument(name, type=Path)
+    build(**vars(parser.parse_args()))
