@@ -11,6 +11,29 @@ from build_mesh_aliases import build as build_aliases
 from build_catalogs import build as build_catalogs
 
 
+def verify_runtime(path):
+    # Map the candidate without running its entry point or loading dependencies.
+    import ctypes
+    from ctypes import wintypes
+
+    kernel = ctypes.WinDLL("kernel32", use_last_error=True)
+    kernel.LoadLibraryExW.argtypes = [wintypes.LPCWSTR, wintypes.HANDLE, wintypes.DWORD]
+    kernel.LoadLibraryExW.restype = wintypes.HMODULE
+    kernel.GetProcAddress.argtypes = [wintypes.HMODULE, ctypes.c_char_p]
+    kernel.GetProcAddress.restype = ctypes.c_void_p
+    kernel.FreeLibrary.argtypes = [wintypes.HMODULE]
+    handle = kernel.LoadLibraryExW(str(path.resolve()), None, 1)
+    if not handle:
+        raise ctypes.WinError(ctypes.get_last_error())
+    try:
+        for name in ("RedPandaMenuRow", "RedPandaConfirmMenuRow", "RedPandaSelectedStyle",
+                     "RedPandaProfessionName", "RedPandaApplyScene"):
+            if not kernel.GetProcAddress(handle, name.encode("ascii")):
+                raise ValueError(f"{path} lacks required runtime export {name}")
+    finally:
+        kernel.FreeLibrary(handle)
+
+
 def stage_resources(assets, strings, stage):
     root = stage / "ssmods" / "RedPanda" / "assets"
     root.mkdir(parents=True)
@@ -33,6 +56,7 @@ def stage_resources(assets, strings, stage):
 def build(assets, strings, loader, runtime, output, stock=None, rules=None):
     if output.exists():
         raise FileExistsError(output)
+    verify_runtime(runtime)
     output.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(dir=output.parent) as tmp:
         stage = Path(tmp) / "payload"
