@@ -29,3 +29,12 @@ extern "C" __declspec(dllexport) bool RedPandaConfirmMenuRow(int row) noexcept
     if (RedPandaSaveStyle(!selected)) selected = !selected;
     return true;
 }
+
+extern "C" __declspec(dllexport) void RedPandaDrawGraphicsMenu(
+    red_panda::DrawMenuRows draw, void* context, std::int64_t count,
+    const red_panda::GraphicsMenuRow* rows, int layout, int selected,
+    const void* color) noexcept
+{
+    red_panda::draw_character_graphics_menu(draw, context, count, rows,
+                                            layout, selected, color, selected_style());
+}
