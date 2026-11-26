@@ -43,6 +43,10 @@ def build(assets, strings, loader, runtime, output, stock=None, rules=None):
                 target = path.relative_to(stage).as_posix()
                 entries.append(dict(source=target, target=target,
                                     sha256=hashlib.sha256(path.read_bytes()).hexdigest()))
+                if (path.suffix == ".compressed_mesh" and
+                        path.parent == stage / "ssmods/RedPanda/assets/data-pc"):
+                    entries.append(dict(source=target, target="data-pc/red_panda_" + path.name,
+                                        sha256=entries[-1]["sha256"]))
         if (stock is None) != (rules is None):
             raise ValueError("Supply both stock and rules for direct-install migration")
         if stock is not None:
