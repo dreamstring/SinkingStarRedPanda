@@ -7,6 +7,7 @@ import tempfile
 from pathlib import Path
 
 from build_menu_strings import build as build_strings
+from build_mesh_aliases import build as build_aliases
 
 
 def stage_resources(assets, strings, stage):
@@ -35,6 +36,7 @@ def build(assets, strings, loader, runtime, output, stock=None, rules=None):
     with tempfile.TemporaryDirectory(dir=output.parent) as tmp:
         stage = Path(tmp) / "payload"
         stage_resources(assets, strings, stage)
+        build_aliases(assets, strings.parent / "materials.package", stage)
         shutil.copyfile(loader, stage / "winmm.dll")
         shutil.copyfile(runtime, stage / "ssmods" / "RedPanda" / "RedPanda.dll")
         entries = []
@@ -43,10 +45,6 @@ def build(assets, strings, loader, runtime, output, stock=None, rules=None):
                 target = path.relative_to(stage).as_posix()
                 entries.append(dict(source=target, target=target,
                                     sha256=hashlib.sha256(path.read_bytes()).hexdigest()))
-                if (path.suffix == ".compressed_mesh" and
-                        path.parent == stage / "ssmods/RedPanda/assets/data-pc"):
-                    entries.append(dict(source=target, target="data-pc/red_panda_" + path.name,
-                                        sha256=entries[-1]["sha256"]))
         if (stock is None) != (rules is None):
             raise ValueError("Supply both stock and rules for direct-install migration")
         if stock is not None:
