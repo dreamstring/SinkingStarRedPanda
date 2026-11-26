@@ -1,3 +1,4 @@
+import hashlib
 import re
 import shutil
 import struct
@@ -5,6 +6,27 @@ from pathlib import Path
 
 import lz4.block
 from build_style_assets import directory, read
+
+
+def correct_druid_antlers(raw):
+    # Six eight-vertex branches in the verified quadruped asset, across all LODs.
+    data = bytearray(raw)
+    vertices, = struct.unpack_from("<I", data, 4)
+    slots, = struct.unpack_from("<I", data, 52)
+    offset = 56 + 44 * vertices
+    for _ in range(3):
+        indices, size = struct.unpack_from("<II", data, offset + 12 * slots)
+        first = offset + 12 * slots + 10
+        corrected = 0
+        for face in range(first, first + 2 * indices, 6):
+            a, b, c = struct.unpack_from("<3H", data, face)
+            if 16973 <= min(a, b, c) and max(a, b, c) <= 17020:
+                struct.pack_into("<3H", data, face, c, b, a)
+                corrected += 1
+        if corrected != 144:
+            raise ValueError("Unexpected antler triangle count")
+        offset = first + size
+    return bytes(data)
 
 
 def build(assets, original_materials, stage):
@@ -53,6 +75,10 @@ def build(assets, original_materials, stage):
         blob = mesh.read_bytes()
         size, = struct.unpack_from("<I", blob, 8)
         raw = lz4.block.decompress(blob[12:], uncompressed_size=size - 12)
+        if mesh.stem == "druid" and hashlib.sha256(blob).hexdigest() == (
+            "1ed9499bf0fa4cefc1ef3d80a51d36a232f9bab61a96498a429e2653f8beda9c"
+        ):
+            raw = correct_druid_antlers(raw)
         # Mesh material names are ASCII strings preceded by their uint16 byte count.
         def mesh_ref(match):
             name = match[2]
