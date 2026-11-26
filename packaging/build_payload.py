@@ -28,7 +28,7 @@ def stage_resources(assets, strings, stage):
     build_strings(strings, stage / "data" / "strings")
 
 
-def build(assets, strings, loader, runtime, output):
+def build(assets, strings, loader, runtime, output, stock=None, rules=None):
     if output.exists():
         raise FileExistsError(output)
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -43,6 +43,21 @@ def build(assets, strings, loader, runtime, output):
                 target = path.relative_to(stage).as_posix()
                 entries.append(dict(source=target, target=target,
                                     sha256=hashlib.sha256(path.read_bytes()).hexdigest()))
+        if (stock is None) != (rules is None):
+            raise ValueError("Supply both stock and rules for direct-install migration")
+        if stock is not None:
+            for rule in json.loads(rules.read_bytes()):
+                target = rule["file"]
+                source = Path("migration") / target
+                destination = stage / source
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copyfile(stock / target, destination)
+                with destination.open("rb") as stream:
+                    digest = hashlib.file_digest(stream, "sha256").hexdigest()
+                if digest != rule["original"]:
+                    raise ValueError(f"Original asset mismatch: {target}")
+                entries.append(dict(source=source.as_posix(), target=target, sha256=digest,
+                                    migrateFrom=rule["modified"]))
         (stage / "plugin.json").write_text(json.dumps(entries, indent=2), encoding="utf-8")
         stage.rename(output)
 
@@ -51,4 +66,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     for name in ("assets", "strings", "loader", "runtime", "output"):
         parser.add_argument(name, type=Path)
+    parser.add_argument("--stock", type=Path)
+    parser.add_argument("--rules", type=Path)
     build(**vars(parser.parse_args()))

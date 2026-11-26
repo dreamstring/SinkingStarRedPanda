@@ -6,7 +6,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Security.Cryptography;
 
-public record PluginFile(string source, string target, string sha256);
+public record PluginFile(string source, string target, string sha256, string? migrateFrom = null);
 public record Entry(string target, string installed, string? original);
 
 public static class Package
@@ -67,6 +67,12 @@ public static class Package
             foreach (var file in files) {
                 var target = Target(game,file.target);
                 if (!targets.Add(target) || Directory.Exists(target)) throw new InvalidDataException(target);
+                if (file.migrateFrom != null) {
+                    var current = Hash(target);
+                    if (current.Equals(file.sha256, StringComparison.OrdinalIgnoreCase)) continue;
+                    if (!current.Equals(file.migrateFrom, StringComparison.OrdinalIgnoreCase))
+                        throw new InvalidDataException($"Unrecognized game asset: {file.target}");
+                }
                 for (var dir = Path.GetDirectoryName(target); dir != null && !Directory.Exists(dir);
                      dir = Path.GetDirectoryName(dir))
                     newDirectories.Add(Path.GetRelativePath(game, dir));
