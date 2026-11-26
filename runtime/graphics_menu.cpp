@@ -1,3 +1,4 @@
+#include <windows.h>
 #include "graphics_menu_row.hpp"
 
 extern "C" bool RedPandaReadStyle() noexcept;
@@ -37,4 +38,14 @@ extern "C" __declspec(dllexport) void RedPandaDrawGraphicsMenu(
 {
     red_panda::draw_character_graphics_menu(draw, context, count, rows,
                                             layout, selected, color, selected_style());
+}
+
+extern "C" __declspec(dllexport) void RedPandaDrawInstalledPage(
+    void* context, std::int64_t count, const red_panda::GraphicsMenuRow* rows,
+    int layout, int selected, const void* color) noexcept
+{
+    // This adapter is imported only by the fingerprinted Steam build.
+    auto base = reinterpret_cast<std::uintptr_t>(GetModuleHandleW(nullptr));
+    auto draw = reinterpret_cast<red_panda::DrawMenuRows>(base + 0xb2250);
+    RedPandaDrawGraphicsMenu(draw, context, count, rows, layout, selected, color);
 }
