@@ -8,6 +8,7 @@ from pathlib import Path
 
 from build_menu_strings import build as build_strings
 from build_mesh_aliases import build as build_aliases
+from build_catalogs import build as build_catalogs
 
 
 def stage_resources(assets, strings, stage):
@@ -37,6 +38,7 @@ def build(assets, strings, loader, runtime, output, stock=None, rules=None):
         stage = Path(tmp) / "payload"
         stage_resources(assets, strings, stage)
         build_aliases(assets, strings.parent / "materials.package", stage)
+        build_catalogs(strings.parent, stage)
         shutil.copyfile(loader, stage / "winmm.dll")
         shutil.copyfile(runtime, stage / "ssmods" / "RedPanda" / "RedPanda.dll")
         entries = []
@@ -50,6 +52,13 @@ def build(assets, strings, loader, runtime, output, stock=None, rules=None):
         if stock is not None:
             for rule in json.loads(rules.read_bytes()):
                 target = rule["file"]
+                if target in {"data/materials.package", "data/levels.package"}:
+                    with (strings.parent / Path(target).name).open("rb") as stream:
+                        if hashlib.file_digest(stream, "sha256").hexdigest() != rule["original"]:
+                            raise ValueError(f"Original catalog mismatch: {target}")
+                    entry = next(item for item in entries if item["target"] == target)
+                    entry.update(migrateFrom=rule["modified"], stockFrom=rule["original"])
+                    continue
                 source = Path("migration") / target
                 destination = stage / source
                 destination.parent.mkdir(parents=True, exist_ok=True)
