@@ -14,6 +14,12 @@
 
 [![小熊猫外观实机动态预览，点击播放 MP4](docs/red-panda-gameplay.webp)](https://cdn.jsdelivr.net/gh/dreamstring/SinkingStarRedPanda@c0f33bf/docs/red-panda-gameplay.mp4)
 
+
+https://github.com/user-attachments/assets/7eb6a0eb-ac0f-4198-b7c3-bbd9ce4a2400
+https://github.com/user-attachments/assets/afd0903d-b3e7-48ff-999f-b29374654dc8
+
+
+
 **月人腕杖连续两次推动魔镜** · 19 秒
 
 [![连续两次推动魔镜动态预览，点击播放 MP4](docs/moonman-mirror.webp)](https://cdn.jsdelivr.net/gh/dreamstring/SinkingStarRedPanda@c0f33bf/docs/moonman-mirror.mp4)
