@@ -22,18 +22,26 @@ Windows x64 单文件版包含 WPF 运行时和全部插件资源。首次运行
 
 安装器校验清单后，把菜单适配、插件、双套模型和配套资源写入所选游戏目录。角色网格以职业名和带 `red_panda_` 前缀的别名并存。构建安装包时同步准备材质、动画、关卡资源目录、描边配置和菜单翻译，使游戏能按目标名称解析外观。一次菜单切换只需保存选择、更新实体的网格绑定；资源包在安装时已经就位。
 
-| 职业 | 原版网格名 | 单独适配的变体 |
+十个职业都有原版和小熊猫外观。每行是一对可双向切换的网格；有独立变体的职业另列一行。
+
+| 职业 | 原版网格 | 对应的小熊猫网格 |
 |---|---|---|
-| 战士 | `warrior` | `warrior_alt` |
-| 盗贼 | `thief` | `thief_alt` |
-| 传送法师 | `wizard` | — |
-| 女祭司 | `cleric` | `cleric_alt` |
-| 吟游诗人 | `bard` | — |
-| 德鲁伊 | `druid` | — |
-| 水手 | `castaway` | `castaway_alt` |
-| 月人 | `moonman` | `moonman_alt` |
-| 商人 | `trader` | `trader_alt` |
-| 女王 | `queen` | — |
+| 战士 | `warrior` | `red_panda_warrior` |
+| 战士（变体） | `warrior_alt` | `red_panda_warrior_alt` |
+| 盗贼 | `thief` | `red_panda_thief` |
+| 盗贼（变体） | `thief_alt` | `red_panda_thief_alt` |
+| 传送法师 | `wizard` | `red_panda_wizard` |
+| 女祭司 | `cleric` | `red_panda_cleric` |
+| 女祭司（变体） | `cleric_alt` | `red_panda_cleric_alt` |
+| 吟游诗人 | `bard` | `red_panda_bard` |
+| 德鲁伊 | `druid` | `red_panda_druid` |
+| 水手 | `castaway` | `red_panda_castaway` |
+| 水手（变体） | `castaway_alt` | `red_panda_castaway_alt` |
+| 月人 | `moonman` | `red_panda_moonman` |
+| 月人（变体） | `moonman_alt` | `red_panda_moonman_alt` |
+| 商人 | `trader` | `red_panda_trader` |
+| 商人（变体） | `trader_alt` | `red_panda_trader_alt` |
+| 女王 | `queen` | `red_panda_queen` |
 
 ## 技术路径
 
