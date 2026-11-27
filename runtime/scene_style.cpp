@@ -75,6 +75,7 @@ extern "C" __declspec(dllexport) int RedPandaApplyScene(
     return changed;
 }
 
+extern "C" void RedPandaPollKeyboard() noexcept;
 extern "C" bool RedPandaSelectedStyle() noexcept;
 
 extern "C" __declspec(dllexport) void RedPandaUpdateInstalledScene(
@@ -83,6 +84,7 @@ extern "C" __declspec(dllexport) void RedPandaUpdateInstalledScene(
     const auto base = reinterpret_cast<std::uintptr_t>(GetModuleHandleW(nullptr));
     using Update = void(*)(void*, void*, unsigned char, std::uintptr_t, void*);
     reinterpret_cast<Update>(base + 0x285d70)(context, world, mode, flags, result);
+    RedPandaPollKeyboard();
     RedPandaApplyScene(context, world, reinterpret_cast<const void*>(base + 0x6a8bf0),
                        reinterpret_cast<SelectMesh>(base + 0x199ac0), RedPandaSelectedStyle());
 }

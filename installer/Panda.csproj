@@ -4,4 +4,16 @@
     <UseWPF>true</UseWPF><ApplicationIcon>game.ico</ApplicationIcon>
     <Nullable>enable</Nullable><NuGetAudit>false</NuGetAudit>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(PandaPayload)' != ''">
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <PublishSingleFile>true</PublishSingleFile>
+    <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <DebugType>none</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(PandaPayload)' != ''">
+    <Content Include="$(PandaPayload)/**/*" Link="payload/%(RecursiveDir)%(Filename)%(Extension)" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
 </Project>

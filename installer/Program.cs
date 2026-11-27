@@ -77,11 +77,12 @@ public partial class InstallerWindow : Window
         uninstall.Click+=async (_,_)=>await Apply(false);
         Closing+=(_,e)=>{ if (applying) e.Cancel=true; };
     }
+    static string ManifestPath => Path.Combine(Path.GetDirectoryName(typeof(Package).Assembly.Location)!, "payload", "plugin.json");
     async Task Apply(bool installing)
     {
         if (applying) return;
         var game = path.Text;
-        var manifest = Path.Combine(AppContext.BaseDirectory, "payload", "plugin.json");
+        var manifest = ManifestPath;
         applying=true;
         status.Text=words[installing ? 2 : 3]+"…";
         Update();
@@ -115,6 +116,15 @@ public partial class InstallerWindow : Window
     }
     [STAThread] public static int Main(string[] args)
     {
+        if(args.SequenceEqual(new[]{"--verify-payload"})) {
+            var manifest = ManifestPath;
+            var files = System.Text.Json.JsonSerializer.Deserialize<PluginFile[]>(File.ReadAllText(manifest))!;
+            foreach (var file in files) {
+                using var input = File.OpenRead(Path.Combine(Path.GetDirectoryName(manifest)!, file.source));
+                if (!Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(input)).Equals(file.sha256, StringComparison.OrdinalIgnoreCase)) return 1;
+            }
+            return files.Length == 0 ? 1 : 0;
+        }
         if(args.SequenceEqual(new[]{"--self-test"})) return Checks.Run();
         return new Application().Run(new InstallerWindow());
     }

@@ -55,17 +55,21 @@ constexpr GraphicsMenuRow character_style_row(bool panda)
 using DrawMenuRows = void (*)(void*, std::int64_t, const GraphicsMenuRow*,
                               int, int, const void*);
 
-inline void draw_character_graphics_menu(DrawMenuRows draw, void* context,
-                                         std::int64_t count, const GraphicsMenuRow* rows,
-                                         int layout, int selected, const void* color,
-                                         bool panda)
-{
+inline bool is_graphics_page(std::int64_t count, const GraphicsMenuRow* rows) {
     // The native settings pages share this renderer. Match the graphics page by its first localization key.
     std::string_view first;
     if (count > 0 && count <= character_style_id && rows && rows[0].key &&
         rows[0].key_length > 0 && rows[0].key_length <= 32)
         first = {rows[0].key, static_cast<std::size_t>(rows[0].key_length)};
-    if (first != "fullscreen_on" && first != "fullscreen_off") {
+    return first == "fullscreen_on" || first == "fullscreen_off";
+}
+
+inline void draw_character_graphics_menu(DrawMenuRows draw, void* context,
+                                         std::int64_t count, const GraphicsMenuRow* rows,
+                                         int layout, int selected, const void* color,
+                                         bool panda)
+{
+    if (!is_graphics_page(count, rows)) {
         draw(context, count, rows, layout, selected, color);
         return;
     }
