@@ -10,11 +10,15 @@
 
 [查看十职业实机总图原图](https://github.com/dreamstring/SinkingStarRedPanda/releases/download/v1.0.0/heroes-gameplay.png)
 
-**沉星之序 · 小熊猫外观** · 1 分 18 秒
+**实机演示：切换角色外观** · 1 分 18 秒
+
+在游戏中切换原版角色与小熊猫外观，查看切换前后的角色造型。
 
 https://github.com/user-attachments/assets/afd0903d-b3e7-48ff-999f-b29374654dc8
 
-**月人腕杖连续两次推动魔镜** · 19 秒
+**动作对比：原版月人与小熊猫月人** · 19 秒
+
+对照两种外观下的同一段操作：月人用腕杖连续两次推动魔镜。
 
 https://github.com/user-attachments/assets/7eb6a0eb-ac0f-4198-b7c3-bbd9ce4a2400
 
