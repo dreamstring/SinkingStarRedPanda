@@ -3,6 +3,7 @@
     <OutputType>WinExe</OutputType><TargetFramework>net8.0-windows</TargetFramework>
     <UseWPF>true</UseWPF><ApplicationIcon>game.ico</ApplicationIcon>
     <Nullable>enable</Nullable><NuGetAudit>false</NuGetAudit>
+    <Version>1.0.1</Version>
   </PropertyGroup>
   <PropertyGroup Condition="'$(PandaPayload)' != ''">
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
