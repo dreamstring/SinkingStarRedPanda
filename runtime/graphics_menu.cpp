@@ -1,5 +1,6 @@
 #include <windows.h>
 #include <Xinput.h>
+#include "trigger_hold.hpp"
 #pragma comment(lib, "Xinput9_1_0.lib")
 #include "graphics_menu_row.hpp"
 
@@ -48,6 +49,29 @@ void on_press(bool down, bool& previous) noexcept {
 extern "C" void RedPandaPollKeyboard() noexcept {
     static bool previous = false;
     on_press((GetAsyncKeyState(VK_F9) & 0x8000) != 0, previous);
+}
+extern "C" void RedPandaPollSceneShortcuts() noexcept {
+    RedPandaPollKeyboard();
+    static TriggerHold holds[XUSER_MAX_COUNT]{};
+    static ULONGLONG next[XUSER_MAX_COUNT]{};
+    const auto now = GetTickCount64();
+    const bool focused = foreground_game();
+    bool toggle = false;
+    for (DWORD i = 0; i < XUSER_MAX_COUNT; ++i) {
+        if (!focused) { holds[i] = {}; continue; }
+        if (now < next[i]) continue;
+        XINPUT_STATE state{};
+        if (XInputGetState(i, &state) != ERROR_SUCCESS) {
+            holds[i] = {};
+            next[i] = now + 1000;
+            continue;
+        }
+        if (next[i] && now - next[i] > 250) holds[i] = {};
+        next[i] = now + 16;
+        if (holds[i].update(state.Gamepad.bLeftTrigger, state.Gamepad.bRightTrigger, now))
+            toggle = true;
+    }
+    if (toggle) RedPandaConfirmMenuRow(red_panda::character_style_id);
 }
 extern "C" __declspec(dllexport) void RedPandaDrawGraphicsMenu(
     red_panda::DrawMenuRows draw, void* context, std::int64_t count,
