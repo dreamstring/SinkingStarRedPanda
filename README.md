@@ -24,6 +24,8 @@ https://github.com/user-attachments/assets/7eb6a0eb-ac0f-4198-b7c3-bbd9ce4a2400
 
 ## 安装与卸载
 
+[下载最新稳定版 Panda.exe](https://github.com/dreamstring/SinkingStarRedPanda/releases/latest/download/Panda.exe)
+
 ![小熊猫外观安装器的实际 WPF 界面](docs/installer.png)
 
 打开安装包里的 `Panda.exe`，确认自动识别的游戏目录，关闭游戏后点「安装插件」。完成后可点「打开游戏」。卸载时关闭游戏，在同一面板点「卸载插件」。安装器依据所选目录的安装记录恢复文件。
@@ -153,6 +155,8 @@ flowchart LR
 2. 从仓库根目录运行 `py packaging/build_payload.py "<小熊猫资源目录>" "<原版游戏目录>/data/strings" "<loader目录>/winmm.dll" "<编译输出>/RedPanda.dll" "<新建payload目录>"`。输出目录须尚未存在。若发行包还要支持从旧的直接替换版迁移，额外传入 `--stock "<原版备份根目录>" --rules "<迁移规则.json>"`。
 3. 运行 `dotnet publish installer/Panda.csproj -c Release "-p:PandaPayload=<payload绝对路径>" -o dist`。已有完整 payload 时可直接从这一步发布。将生成的 `Panda.exe` 单独放进空目录，即可检验单文件交付。
 4. 在 PowerShell 中分别运行 `(Start-Process .\Panda.exe --verify-payload -Wait -PassThru).ExitCode` 和 `(Start-Process .\Panda.exe --self-test -Wait -PassThru).ExitCode`。两项成功时均返回 0。
+
+每次提升安装器版本号时，同步发布对应版本的 GitHub Release。用 `vX.Y.Z` 标记该版本的源码提交，上传通过上述自检的单文件 `Panda.exe`。核对线上附件 SHA-256 与本地一致，并确认稳定版出现在 Latest 下载入口。
 
 ### 当前验证范围
 
