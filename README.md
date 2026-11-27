@@ -10,10 +10,13 @@
 
 [查看十职业实机总图原图](https://github.com/dreamstring/SinkingStarRedPanda/releases/download/v1.0.0/heroes-gameplay.png)
 
-| 实机视频（MP4） | 时长 |
-|---|---:|
-| [沉星之序 · 小熊猫外观](https://github.com/dreamstring/SinkingStarRedPanda/releases/download/v1.0.0/red-panda-gameplay.mp4) | 1 分 18 秒 |
-| [月人腕杖连续两次推动魔镜](https://github.com/dreamstring/SinkingStarRedPanda/releases/download/v1.0.0/moonman-mirror.mp4) | 19 秒 |
+**沉星之序 · 小熊猫外观** · 1 分 18 秒
+
+[![小熊猫外观实机动态预览，点击播放 MP4](docs/red-panda-gameplay.webp)](https://cdn.jsdelivr.net/gh/dreamstring/SinkingStarRedPanda@c0f33bf/docs/red-panda-gameplay.mp4)
+
+**月人腕杖连续两次推动魔镜** · 19 秒
+
+[![连续两次推动魔镜动态预览，点击播放 MP4](docs/moonman-mirror.webp)](https://cdn.jsdelivr.net/gh/dreamstring/SinkingStarRedPanda@c0f33bf/docs/moonman-mirror.mp4)
 
 ## 安装与卸载
 
