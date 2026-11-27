@@ -60,7 +60,12 @@ inline void draw_character_graphics_menu(DrawMenuRows draw, void* context,
                                          int layout, int selected, const void* color,
                                          bool panda)
 {
-    if (count < 0 || count > character_style_id || (count && !rows)) {
+    // The native settings pages share this renderer. Match the graphics page by its first localization key.
+    std::string_view first;
+    if (count > 0 && count <= character_style_id && rows && rows[0].key &&
+        rows[0].key_length > 0 && rows[0].key_length <= 32)
+        first = {rows[0].key, static_cast<std::size_t>(rows[0].key_length)};
+    if (first != "fullscreen_on" && first != "fullscreen_off") {
         draw(context, count, rows, layout, selected, color);
         return;
     }

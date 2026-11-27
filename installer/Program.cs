@@ -12,17 +12,17 @@ public static class Language
 {
     static readonly string[] Codes = "english french german italian japanese koreana portuguese russian schinese spanish tchinese".Split();
     static readonly string[] Labels = {
-        "Game folder|Browse|Install|Uninstall|Done",
-        "Dossier du jeu|Parcourir|Installer|Désinstaller|Terminé",
-        "Spielordner|Durchsuchen|Installieren|Deinstallieren|Fertig",
-        "Cartella del gioco|Sfoglia|Installa|Disinstalla|Completato",
-        "ゲームフォルダー|参照|インストール|アンインストール|完了",
-        "게임 폴더|찾아보기|설치|제거|완료",
-        "Pasta do jogo|Procurar|Instalar|Desinstalar|Concluído",
-        "Папка игры|Обзор|Установить|Удалить|Готово",
-        "游戏目录|浏览|安装插件|卸载插件|操作完成",
-        "Carpeta del juego|Examinar|Instalar|Desinstalar|Listo",
-        "遊戲目錄|瀏覽|安裝外掛|解除安裝|操作完成"
+        "Game folder|Browse|Install|Uninstall|Done|Play|Installed",
+        "Dossier du jeu|Parcourir|Installer|Désinstaller|Terminé|Jouer|Installé",
+        "Spielordner|Durchsuchen|Installieren|Deinstallieren|Fertig|Spielen|Installiert",
+        "Cartella del gioco|Sfoglia|Installa|Disinstalla|Completato|Gioca|Installato",
+        "ゲームフォルダー|参照|インストール|アンインストール|完了|ゲーム起動|導入済み",
+        "게임 폴더|찾아보기|설치|제거|완료|게임 실행|설치됨",
+        "Pasta do jogo|Procurar|Instalar|Desinstalar|Concluído|Jogar|Instalado",
+        "Папка игры|Обзор|Установить|Удалить|Готово|Играть|Установлено",
+        "游戏目录|浏览|安装插件|卸载插件|操作完成|打开游戏|已安装",
+        "Carpeta del juego|Examinar|Instalar|Desinstalar|Listo|Jugar|Instalado",
+        "遊戲目錄|瀏覽|安裝外掛|解除安裝|操作完成|開啟遊戲|已安裝"
     };
     public static string[] Read(string game)
     {
@@ -72,6 +72,7 @@ public partial class InstallerWindow : Window
             if(folder.ShowDialog(this)!=true) return;
             path.Text=folder.FolderName; status.Text=""; words=global::Language.Read(path.Text); Update();
         });
+        launch.Click+=(_,_)=>Run(()=>System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(Path.Combine(path.Text,"sinking_star.exe")) { WorkingDirectory=path.Text, UseShellExecute=true }));
         install.Click+=async (_,_)=>await Apply(true);
         uninstall.Click+=async (_,_)=>await Apply(false);
         Closing+=(_,e)=>{ if (applying) e.Cancel=true; };
@@ -99,7 +100,12 @@ public partial class InstallerWindow : Window
         var validGame = path.Text.Length > 0 && File.Exists(Path.Combine(path.Text, "sinking_star.exe"));
         var installed = validGame && Package.HasReceipt(path.Text);
         browse.IsEnabled = !applying;
-        install.IsEnabled = validGame && !applying;
+        launch.Content = words[5];
+        launch.IsEnabled = validGame && !applying;
+        install.Content = installed ? words[6] : words[2];
+        install.SetResourceReference(Button.BackgroundProperty, installed ? "Control" : "Brand");
+        uninstall.SetResourceReference(Button.BackgroundProperty, installed ? "Brand" : "Control");
+        install.IsEnabled = validGame && !installed && !applying;
         uninstall.IsEnabled = installed && !applying;
     }
     void Run(Action action)

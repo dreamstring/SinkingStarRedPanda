@@ -26,6 +26,7 @@
     </Border>
    </DockPanel>
    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+    <Button x:Name="launch" Margin="0,0,8,0"/>
     <Button x:Name="uninstall" Margin="0,0,8,0"/>
     <Button x:Name="install" Background="{DynamicResource Brand}"/>
    </StackPanel>
