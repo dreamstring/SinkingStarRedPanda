@@ -24,15 +24,23 @@ public static class Checks
             void Plan(string second)=>File.WriteAllText(manifest,JsonSerializer.Serialize(new[]{new PluginFile("payload","old",digest),new PluginFile("payload",second,digest)}));
             Plan("added"); Package.Install(game,manifest);
             Check(File.ReadAllText(old)=="plugin" && File.ReadAllText(added)=="plugin");
+            Check(Package.InstalledVersion(game)==Package.BundledVersion);
             Package.Install(game,manifest);
+            var marker = Path.Combine(game,".panda-install","version.txt");
+            File.WriteAllText(marker,"99.0.0");
+            try { Package.Install(game,manifest); throw new Exception("Expected downgrade guard"); }
+            catch(InvalidOperationException){}
+            File.WriteAllText(marker,"1.0.0");
             File.WriteAllText(Path.Combine(root,"v2"),"updated");
             File.WriteAllText(manifest,JsonSerializer.Serialize(new[]{new PluginFile("v2","old",digest)}));
             try {Package.Install(game,manifest); throw new Exception("Expected invalid upgrade");}
             catch(InvalidDataException){}
             Check(File.ReadAllText(old)=="plugin" && File.ReadAllText(added)=="plugin");
+            Check(Package.InstalledVersion(game)==new Version(1,0,0));
             var updatedDigest=Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(Path.Combine(root,"v2"))));
             File.WriteAllText(manifest,JsonSerializer.Serialize(new[]{new PluginFile("v2","old",updatedDigest)}));
             Package.Install(game,manifest);
+            Check(Package.InstalledVersion(game)==Package.BundledVersion);
             Check(File.ReadAllText(old)=="updated" && !File.Exists(added));
             Package.Uninstall(game); Check(File.ReadAllText(old)=="original" && !File.Exists(added));
             Plan("old/child");

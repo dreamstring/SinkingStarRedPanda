@@ -14,6 +14,25 @@ public static class Package
     const string State = ".panda-install";
     public static bool HasReceipt(string game) =>
         File.Exists(Path.Combine(game, State, "receipt.json"));
+    public static readonly Version BundledVersion = new(typeof(Package).Assembly.GetName().Version!.ToString(3));
+
+    public static Version? InstalledVersion(string game)
+    {
+        if (!HasReceipt(game)) return null;
+        var state = Resolve(game, State);
+        var marker = Resolve(state, "version.txt");
+        if (File.Exists(marker))
+            return Version.TryParse(File.ReadAllText(marker).Trim(), out var version) ? version : null;
+        var entries = JsonSerializer.Deserialize<Entry[]>(File.ReadAllText(Resolve(state, "receipt.json")));
+        var runtime = entries?.FirstOrDefault(e => string.Equals(e.target.Replace('\\','/'),
+            "ssmods/RedPanda/RedPanda.dll", StringComparison.OrdinalIgnoreCase));
+        return runtime?.installed.ToUpperInvariant() switch {
+            "C3B7D499603852F9009FC44BF3A497265B978ED61448E011874D229252EC8E91" => new Version(1,0,0),
+            "3740894E7F4C01CCD814F0EF0DF25D325126B75AC6B8682F36D5BDB75D823C12" => new Version(1,0,1),
+            _ => null
+        };
+    }
+
     static string Hash(string file)
     {
         using var stream = File.OpenRead(file);
@@ -55,10 +74,12 @@ public static class Package
     public static void Install(string game, string manifest)
     {
         using var guard = Lock(game);
-        if (!HasReceipt(game)) { InstallFresh(game,manifest); return; }
+        if (!HasReceipt(game)) { InstallFresh(game,manifest,BundledVersion); return; }
         var state = Resolve(game,State);
         var entries = JsonSerializer.Deserialize<Entry[]>(File.ReadAllText(Resolve(state,"receipt.json")))
             ?? throw new InvalidDataException(state);
+        var previousVersion = InstalledVersion(game);
+        if (previousVersion > BundledVersion) throw new InvalidOperationException($"v{previousVersion} > v{BundledVersion}");
         var rollback = Directory.CreateTempSubdirectory("panda-upgrade-").FullName;
         bool retainRollback = false;
         try {
@@ -73,9 +94,9 @@ public static class Package
             var previousManifest = Path.Combine(rollback,"plugin.json");
             File.WriteAllText(previousManifest,JsonSerializer.Serialize(previous));
             Restore(game);
-            try { InstallFresh(game,manifest); }
+            try { InstallFresh(game,manifest,BundledVersion); }
             catch {
-                try { InstallFresh(game,previousManifest,allowEmptyReceipt:true); }
+                try { InstallFresh(game,previousManifest,previousVersion,allowEmptyReceipt:true); }
                 catch (Exception recovery) {
                     retainRollback = true;
                     throw new IOException($"Recovery files: {rollback}",recovery);
@@ -87,7 +108,7 @@ public static class Package
         }
     }
 
-    static void InstallFresh(string game, string manifest, bool allowEmptyReceipt = false)
+    static void InstallFresh(string game, string manifest, Version? version, bool allowEmptyReceipt = false)
     {
         var files = JsonSerializer.Deserialize<PluginFile[]>(File.ReadAllText(manifest));
         if (files == null || (files.Length == 0 && !allowEmptyReceipt)) throw new InvalidDataException(manifest);
@@ -125,6 +146,7 @@ public static class Package
                 entries.Add(new(file.target,installed,original));
             }
             File.WriteAllText(Path.Combine(state,"directories.json"), JsonSerializer.Serialize(newDirectories));
+            if (version != null) File.WriteAllText(Path.Combine(state,"version.txt"),version.ToString());
             File.WriteAllText(Path.Combine(state,"pending"),JsonSerializer.Serialize(entries));
             File.Move(Path.Combine(state,"pending"),Path.Combine(state,"receipt.json"));
             for (int i=0;i<entries.Count;i++) {

@@ -12,17 +12,17 @@ public static class Language
 {
     static readonly string[] Codes = "english french german italian japanese koreana portuguese russian schinese spanish tchinese".Split();
     static readonly string[] Labels = {
-        "Game folder|Browse|Install|Uninstall|Done|Play|Installed",
-        "Dossier du jeu|Parcourir|Installer|Désinstaller|Terminé|Jouer|Installé",
-        "Spielordner|Durchsuchen|Installieren|Deinstallieren|Fertig|Spielen|Installiert",
-        "Cartella del gioco|Sfoglia|Installa|Disinstalla|Completato|Gioca|Installato",
-        "ゲームフォルダー|参照|インストール|アンインストール|完了|ゲーム起動|導入済み",
-        "게임 폴더|찾아보기|설치|제거|완료|게임 실행|설치됨",
-        "Pasta do jogo|Procurar|Instalar|Desinstalar|Concluído|Jogar|Instalado",
-        "Папка игры|Обзор|Установить|Удалить|Готово|Играть|Установлено",
-        "游戏目录|浏览|安装插件|卸载插件|操作完成|打开游戏|已安装",
-        "Carpeta del juego|Examinar|Instalar|Desinstalar|Listo|Jugar|Instalado",
-        "遊戲目錄|瀏覽|安裝外掛|解除安裝|操作完成|開啟遊戲|已安裝"
+        "Game folder|Browse|Install|Uninstall|Done|Play|Installed|Update plugin",
+        "Dossier du jeu|Parcourir|Installer|Désinstaller|Terminé|Jouer|Installé|Mettre à jour",
+        "Spielordner|Durchsuchen|Installieren|Deinstallieren|Fertig|Spielen|Installiert|Aktualisieren",
+        "Cartella del gioco|Sfoglia|Installa|Disinstalla|Completato|Gioca|Installato|Aggiorna",
+        "ゲームフォルダー|参照|インストール|アンインストール|完了|ゲーム起動|導入済み|更新",
+        "게임 폴더|찾아보기|설치|제거|완료|게임 실행|설치됨|업데이트",
+        "Pasta do jogo|Procurar|Instalar|Desinstalar|Concluído|Jogar|Instalado|Atualizar",
+        "Папка игры|Обзор|Установить|Удалить|Готово|Играть|Установлено|Обновить",
+        "游戏目录|浏览|安装插件|卸载插件|操作完成|打开游戏|已安装|更新插件",
+        "Carpeta del juego|Examinar|Instalar|Desinstalar|Listo|Jugar|Instalado|Actualizar",
+        "遊戲目錄|瀏覽|安裝外掛|解除安裝|操作完成|開啟遊戲|已安裝|更新外掛"
     };
     public static string[] Read(string game)
     {
@@ -63,6 +63,7 @@ public partial class InstallerWindow : Window
     public InstallerWindow()
     {
         InitializeComponent();
+        Title += $" v{Package.BundledVersion}";
         Run(()=>{
             path.Text=SteamGame.Find();
             if(path.Text.Length>0) words=global::Language.Read(path.Text);
@@ -84,7 +85,7 @@ public partial class InstallerWindow : Window
         var game = path.Text;
         var manifest = ManifestPath;
         applying=true;
-        status.Text=words[installing ? 2 : 3]+"…";
+        status.Text=(installing ? install.Content : uninstall.Content)+"…";
         Update();
         try {
             await Task.Run(()=>{
@@ -100,13 +101,20 @@ public partial class InstallerWindow : Window
         label.Text=words[0]; browse.Content=words[1]; install.Content=words[2]; uninstall.Content=words[3];
         var validGame = path.Text.Length > 0 && File.Exists(Path.Combine(path.Text, "sinking_star.exe"));
         var installed = validGame && Package.HasReceipt(path.Text);
+        Version? version = null;
+        if (installed) {
+            try { version = Package.InstalledVersion(path.Text); }
+            catch (Exception e) { status.Text = e.Message; }
+        }
+        bool upgrade = installed && version != null && version < Package.BundledVersion;
+        label.Text = installed ? $"{words[0]}   ({words[6]} v{version?.ToString() ?? "?"})" : words[0];
         browse.IsEnabled = !applying;
         launch.Content = words[5];
         launch.IsEnabled = validGame && !applying;
-        install.Content = installed ? words[6] : words[2];
-        install.SetResourceReference(Button.BackgroundProperty, installed ? "Control" : "Brand");
+        install.Content = upgrade ? words[7] : installed ? words[6] : words[2];
+        install.SetResourceReference(Button.BackgroundProperty, installed && !upgrade ? "Control" : "Brand");
         uninstall.SetResourceReference(Button.BackgroundProperty, installed ? "Brand" : "Control");
-        install.IsEnabled = validGame && !installed && !applying;
+        install.IsEnabled = validGame && (!installed || upgrade) && !applying;
         uninstall.IsEnabled = installed && !applying;
     }
     void Run(Action action)
