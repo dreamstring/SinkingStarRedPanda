@@ -22,20 +22,20 @@ Windows x64 单文件版包含 WPF 运行时和全部插件资源。首次运行
 
 安装器校验清单后，把菜单适配、插件、双套模型和配套资源写入所选游戏目录。角色网格以职业名和带 `red_panda_` 前缀的别名并存。构建安装包时同步准备材质、动画、关卡资源目录、描边配置和菜单翻译，使游戏能按目标名称解析外观。一次菜单切换只需保存选择、更新实体的网格绑定；资源包在安装时已经就位。
 
-每个职业占一行。表内的箭头均表示「原版网格 ↔ 小熊猫 Mod 网格」。游戏使用哪个网格，外观开关就切换对应的那一对；菜单只有原版和小熊猫两个选项。
+每个职业占一行。切换外观时，默认模型在「原版」和「Mod」之间切换，变体模型在「变体」和「变体 Mod」之间切换。「—」表示该职业没有单独的变体映射。
 
-| 职业 | 默认模型（原版 ↔ Mod） | 变体模型（原版 ↔ Mod） |
-|---|---|---|
-| 战士 | `warrior` ↔ `red_panda_warrior` | `warrior_alt` ↔ `red_panda_warrior_alt` |
-| 盗贼 | `thief` ↔ `red_panda_thief` | `thief_alt` ↔ `red_panda_thief_alt` |
-| 传送法师 | `wizard` ↔ `red_panda_wizard` | 无单独映射 |
-| 女祭司 | `cleric` ↔ `red_panda_cleric` | `cleric_alt` ↔ `red_panda_cleric_alt` |
-| 吟游诗人 | `bard` ↔ `red_panda_bard` | 无单独映射 |
-| 德鲁伊 | `druid` ↔ `red_panda_druid` | 无单独映射 |
-| 水手 | `castaway` ↔ `red_panda_castaway` | `castaway_alt` ↔ `red_panda_castaway_alt` |
-| 月人 | `moonman` ↔ `red_panda_moonman` | `moonman_alt` ↔ `red_panda_moonman_alt` |
-| 商人 | `trader` ↔ `red_panda_trader` | `trader_alt` ↔ `red_panda_trader_alt` |
-| 女王 | `queen` ↔ `red_panda_queen` | 无单独映射 |
+| 职业 | 原版 | Mod | 变体 | 变体 Mod |
+|---|---|---|---|---|
+| 战士 | `warrior` | `red_panda_warrior` | `warrior_alt` | `red_panda_warrior_alt` |
+| 盗贼 | `thief` | `red_panda_thief` | `thief_alt` | `red_panda_thief_alt` |
+| 传送法师 | `wizard` | `red_panda_wizard` | — | — |
+| 女祭司 | `cleric` | `red_panda_cleric` | `cleric_alt` | `red_panda_cleric_alt` |
+| 吟游诗人 | `bard` | `red_panda_bard` | — | — |
+| 德鲁伊 | `druid` | `red_panda_druid` | — | — |
+| 水手 | `castaway` | `red_panda_castaway` | `castaway_alt` | `red_panda_castaway_alt` |
+| 月人 | `moonman` | `red_panda_moonman` | `moonman_alt` | `red_panda_moonman_alt` |
+| 商人 | `trader` | `red_panda_trader` | `trader_alt` | `red_panda_trader_alt` |
+| 女王 | `queen` | `red_panda_queen` | — | — |
 
 ## 技术路径
 
