@@ -4,6 +4,17 @@
 
 本版对应 Windows x64 Steam 版（App ID 499170，游戏标题画面显示 revision 68307）。运行时适配与原版可执行文件的版本绑定。
 
+## 实机展示
+
+[![十职业实机总图，点击查看高清原图](docs/heroes-gameplay.webp)](https://github.com/dreamstring/SinkingStarRedPanda/releases/download/v1.0.0/heroes-gameplay.png)
+
+[查看十职业实机总图原图](https://github.com/dreamstring/SinkingStarRedPanda/releases/download/v1.0.0/heroes-gameplay.png)
+
+| 实机视频（MP4） | 时长 |
+|---|---:|
+| [沉星之序 · 小熊猫外观](https://github.com/dreamstring/SinkingStarRedPanda/releases/download/v1.0.0/red-panda-gameplay.mp4) | 1 分 18 秒 |
+| [月人腕杖连续两次推动魔镜](https://github.com/dreamstring/SinkingStarRedPanda/releases/download/v1.0.0/moonman-mirror.mp4) | 19 秒 |
+
 ## 安装与卸载
 
 ![小熊猫外观安装器的实际 WPF 界面](docs/installer.png)
